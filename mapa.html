@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktywna mapa ze wszystkimi ulicami</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Interaktywna mapa ze wszystkimi ulicami</h1>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([52.237049, 21.017532], 6);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+            maxZoom: 18,
+        }).addTo(map);
+
+        fetch('path/to/your/json/file.json')
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(function(entry) {
+                    var ulica = entry["Ulica"];
+                    var miasto = entry["Miasto"];
+                    var adres = ulica + ", " + miasto + ", Poland";
+
+                    // Geokodowanie adresu
+                    var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(adres);
+                    fetch(url)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data && data.length > 0) {
+                                var latlng = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+                                L.marker(latlng).addTo(map)
+                                    .bindPopup(ulica + ", " + miasto);
+                            } else {
+                                console.error("Nie można znaleźć lokalizacji dla adresu:", adres);
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Błąd podczas pobierania danych z Nominatim:", error);
+                        });
+                });
+            })
+            .catch(error => console.error('Błąd podczas pobierania danych JSON:', error));
+    </script>
+</body>
+</html>
